@@ -7,6 +7,7 @@ const App = () => {
   const [name,setName] = useState("pruek")
   const [server,setServer]= useState("https://chat-room-be.herokuapp.com")
   const [connectStatus,setConnectStatus] = useState("Connect")
+  const [message,setMessage] = useState([])
   async function connectServer(){
     console.log("in")
     await axios.post("https://chat-room-be.herokuapp.com/message",{
@@ -21,6 +22,9 @@ const App = () => {
         console.log(err)
     })
   }
+  async function getMessageFromServer(){
+
+  }
   return (
     <div className="header">
       <form>
@@ -33,9 +37,21 @@ const App = () => {
           {/* Test connect to demo chat server */}
           <input type="text" name="server" className="input" value={server} onChange={(e) => setServer(e.target.value)}/>
         </label>
-        <input type="submit" value={connectStatus} onClick={() => connectServer()}/>
+        <input type="submit" value={connectStatus} onClick={connectServer()}/>
         </form>
         <hr/>
+        <div>
+          {message}
+        </div>
+        {connectStatus === "Disconnect" ? 
+          <div>
+            <label className="form">
+              User:
+              <input type="text" name="name" className="input" placeholder="Say something here"/>
+            </label>
+            <input type="submit" value="send"/>
+          </div> : null  
+        }
     </div>
   );
 }
