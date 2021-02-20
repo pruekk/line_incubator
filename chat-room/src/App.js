@@ -1,20 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 
 const axios = require('axios');
 
 const App = () => {
   const [name,setName] = useState("pruek")
-  const [server,setServer]= useState("https://chat-room-be.herokuapp.com/message")
+  // const [server,setServer]= useState("https://chat-room-be.herokuapp.com/message")
+  const [server,setServer]= useState("http://localhost:5000/message")
   const [connectStatus,setConnectStatus] = useState("Connect")
-  const [message,setMessage] = useState([])
-  const evtSource = new EventSource(server, { withCredentials: true } );
-  async function connectServer(){
+  const [message,setMessage] = useState("")
+  const [msgServer,setMsgServer] = useState([])
+  const connectServer = async () => {
     console.log("connect to server...")
-    await axios.post(server,{
-      user: name,
-      message: `Connected to ${server}`
-    }).then((res) => {
+    await axios.post(server).then((res) => {
         console.log(res.statusText)
         if (res.statusText === "OK"){
           setConnectStatus("Disconnect")
@@ -23,65 +21,62 @@ const App = () => {
         console.log(err)
     })
   }
-  async function getMessageFromServer(){
-    evtSource.onmessage = function(event) {
-      const newElement = document.createElement("li");
-      const eventList = document.getElementById("list");
-
-      newElement.textContent = "message: " + event.data;
-      eventList.appendChild(newElement);
-      console.log(eventList)
-    }
-    await axios.get(server)
-      .then((res) => {
-        console.log(res)
-    }).catch((err) => {
-        console.log(err)
-    })
-  }
-  async function sendMessageToServer(){
-    const jsonData = JSON.stringify({
+  const sendMessageToServer = async () =>{
+    const jsonData = {
       "user": name,
       "message": message
-    });
-    await axios.post(server,jsonData,{
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }).then((res) => {
-      console.log(res)
-    }).catch((err) => {
-      console.log(err)
-    })
+    };
+    await axios.post(server,jsonData)
+      .then((res) => {
+        console.log(res.statusText)
+      })
+      .catch((err) => {
+        console.log(err)
+      })
   }
+  useEffect(() => {
+    const getMessageFromServer = () => {
+      let source = new EventSource(server)
+      source.onmessage = event => {
+          const data = JSON.parse(event.data)
+          if (Object.keys(data).length !== 0){
+            const data = JSON.parse(event.data)
+            data.timestamp = new Date(event.timeStamp*1000)
+            setMsgServer([...msgServer,data])
+          }
+      }
+    }
+    getMessageFromServer()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[])
   return (
     <div className="header">
-      <form>
-        <label className="form">
-          User:
-          <input type="text" name="name" className="input" value={name} onChange={(e) => setName(e.target.value)}/>
-        </label>
-        <label className="form">
-          Chat Server:
-          {/* Test connect to demo chat server */}
-          <input type="text" name="server" className="input" value={server} onChange={(e) => setServer(e.target.value)}/>
-        </label>
-        <input type="submit" value={connectStatus} onClick={connectServer()}/>
-        {/* <button onClick={getMessageFromServer()}>test evtSource</button> */}
-        </form>
-        <hr/>
-        <div>
-          {message}
-        </div>
-        {connectStatus === "Disconnect" ? 
-          <div>
-            <label className="form">
-              User:
-              <input type="text" name="name" className="input" placeholder="Say something here" onChange={(e) => setMessage(e.target.va)}/>
-            </label>
-            <input type="submit" value="send" onClick={sendMessageToServer()}/>
-          </div> : null  
-        }
+      <label className="form">
+        User:
+        <input type="text" name="name" className="input" value={name} onChange={(e) => setName(e.target.value)}/>
+      </label>
+      <label className="form">
+        Chat Server:
+        {/* Test connect to demo chat server */}
+        <input type="text" name="server" className="input" value={server} onChange={(e) => setServer(e.target.value)}/>
+      </label>
+      <button onClick={() => connectServer()}>{connectStatus}</button>
+      {/* <button onClick={getMessageFromServer()}>test evtSource</button> */}
+      <hr/>
+      <div>
+        {msgServer.map((msg,index) => {
+          return <li key={index}>{msg.timestamp.toString()} - {msg.user} : {msg.message}</li>
+        })}
+      </div>
+      {connectStatus === "Disconnect" ? 
+        <div className="footer">
+          <label className="form">
+            Message:
+            <input type="text" name="name" className="input" placeholder="Say something here" onChange={(e) => setMessage(e.target.value)}/>
+          </label>
+          <input type="submit" value="send" onClick={() => sendMessageToServer()}/>
+        </div> : null  
+      }
     </div>
   );
 }

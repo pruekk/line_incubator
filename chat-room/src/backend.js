@@ -1,24 +1,29 @@
-const express = require('express')
-const cors = require('cors');
-const app = express()
-const port = 5000
-const EventSource = require("eventsource");
+const EventEmitter = require("eventemitter3")
+const emitter = new EventEmitter()
+const express = require("express")
+const cors = require("cors")
+var app = express()
 
-app.use(cors());
-
-app.get('/', (req, res) => {
-    res.send('Hello World!')
-    const evtSource = new EventSource("http://localhost:3000/", { withCredentials: true } );
-    evtSource.onmessage = function(event) {
-        const newElement = document.createElement("li");
-        const eventList = document.getElementById("list");
-
-        newElement.textContent = "message: " + event.data;
-        eventList.appendChild(newElement);
-        console.log(eventList)
-    }
+const subscribe = (req, res) => {
+    res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive"
 })
-
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
-})
+const onMessage = data => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`)
+}
+emitter.on("message", onMessage)
+    req.on("close", function() {
+        emitter.removeListener("message", onMessage)
+    })
+}
+const publish = (req, res) => {
+    emitter.emit("message", req.body)
+    res.json({ message: "success" })
+}
+app.use(cors())
+app.use(express.json())
+app.post("/message", publish)
+app.get("/message", subscribe)
+app.listen(5000, () => {})
