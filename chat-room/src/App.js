@@ -41,7 +41,6 @@ const App = () => {
           const data = JSON.parse(event.data)
           if (Object.keys(data).length !== 0){
             const data = JSON.parse(event.data)
-            data.timestamp = new Date(event.timeStamp*1000)
             setMsgServer(msgServer => msgServer.concat(data))
             // setMsgServer([...msgServer,data])
           }
@@ -66,7 +65,7 @@ const App = () => {
       <hr/>
       <div>
         {msgServer.map((msg,index) => {
-          return <li key={index}>{msg.timestamp.toString()} - {msg.user} : {msg.message}</li>
+          return <li key={index}>{msg.time.toString()} - {msg.user} : {msg.message}</li>
         })}
       </div>
       {connectStatus === "Disconnect" ? 

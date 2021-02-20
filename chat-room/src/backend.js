@@ -4,6 +4,15 @@ const express = require("express")
 const cors = require("cors")
 var app = express()
 
+const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun","Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function isEmpty(obj) {
+    for(var key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+}
+
 const subscribe = (req, res) => {
     res.writeHead(200, {
     "Content-Type": "text/event-stream",
@@ -11,7 +20,12 @@ const subscribe = (req, res) => {
     Connection: "keep-alive"
 })
 const onMessage = data => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`)
+    if (!isEmpty(data)){
+        const timestamp = new Date()
+        const time = timestamp.getDate().toString() +" "+ monthNames[timestamp.getMonth()].toString() +" "+ timestamp.toLocaleTimeString().toString()
+        data.time = time
+        res.write(`data: ${JSON.stringify(data)}\n\n`)
+    }
 }
 emitter.on("message", onMessage)
     req.on("close", function() {
