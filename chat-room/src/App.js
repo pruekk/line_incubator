@@ -42,7 +42,8 @@ const App = () => {
           if (Object.keys(data).length !== 0){
             const data = JSON.parse(event.data)
             data.timestamp = new Date(event.timeStamp*1000)
-            setMsgServer([...msgServer,data])
+            setMsgServer(msgServer => msgServer.concat(data))
+            // setMsgServer([...msgServer,data])
           }
       }
     }
