@@ -7,6 +7,7 @@ const EventSource = require("eventsource");
 app.use(cors());
 
 app.get('/', (req, res) => {
+    res.send('Hello World!')
     const evtSource = new EventSource("http://localhost:3000/", { withCredentials: true } );
     evtSource.onmessage = function(event) {
         const newElement = document.createElement("li");
@@ -15,7 +16,6 @@ app.get('/', (req, res) => {
         newElement.textContent = "message: " + event.data;
         eventList.appendChild(newElement);
         console.log(eventList)
-        res.send('Hello World!')
     }
 })
 
