@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './App.css';
 
 const axios = require('axios');
@@ -8,17 +8,9 @@ const App = () => {
   const [server,setServer]= useState("https://chat-room-be.herokuapp.com/message")
   const [connectStatus,setConnectStatus] = useState("Connect")
   const [message,setMessage] = useState([])
-  // const evtSource = new EventSource("http://localhost:5000/", { withCredentials: true } );
+  const evtSource = new EventSource(server, { withCredentials: true } );
   async function connectServer(){
     console.log("connect to server...")
-    // console.log(evtSource)
-    // evtSource.addEventListener("ping", function(event) {
-    //   const newElement = document.createElement("li");
-    //   const eventList = document.getElementById("list");
-    //   const time = JSON.parse(event.data).time;
-    //   newElement.textContent = "ping at " + time;
-    //   eventList.appendChild(newElement);
-    // });
     await axios.post(server,{
       user: name,
       message: `Connected to ${server}`
@@ -32,6 +24,14 @@ const App = () => {
     })
   }
   async function getMessageFromServer(){
+    evtSource.onmessage = function(event) {
+      const newElement = document.createElement("li");
+      const eventList = document.getElementById("list");
+
+      newElement.textContent = "message: " + event.data;
+      eventList.appendChild(newElement);
+      console.log(eventList)
+    }
     await axios.get(server)
       .then((res) => {
         console.log(res)
@@ -40,14 +40,19 @@ const App = () => {
     })
   }
   async function sendMessageToServer(){
-    await axios({
-      method: 'post',
-      url: server,
-      data: {
-        user: name,
-        message: message
-      }
+    const jsonData = JSON.stringify({
+      "user": name,
+      "message": message
     });
+    await axios.post(server,jsonData,{
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then((res) => {
+      console.log(res)
+    }).catch((err) => {
+      console.log(err)
+    })
   }
   return (
     <div className="header">
